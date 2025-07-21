@@ -1,17 +1,41 @@
 import React from "react";
 import { motion, useAnimation } from "framer-motion";
 
-const points = [
-  { x: 110, y: 400, }, //   Southern Woods
-  { x: 100, y: 200}, // ALIVE LAB
+const zoneCoords = {
+  "Southern Woods": { x: 110, y: 400 }, //   Southern Woods
+  "ALIVE LAB": { x: 100, y: 200 }, // ALIVE LAB
+  "Sugar Factory": { x: 330, y: 240 }, //   Sugar Factory
+  "Red River Town": { x: 400, y: 300 }, //   Red River Town
+  "Checker Board Farm": { x: 460, y: 420 }, //   Checker Board Farm
+};
 
-
-
-//   Checker Board Farm
-  { x: 330, y: 240, label: "B" }, //   Sugar Factory
-  { x: 400, y: 300, }, //   Red River Town
-  { x: 460, y: 420, label: "C" },
+const journeyOrder = [
+  "ALIVE LAB",
+  "Checker Board Farm",
+  "Red River Town",
+  "Sugar Factory",
+  "Southern Woods",
+  "Southern Woods",
+  "ALIVE LAB",
+  "Southern Woods",
+  "Southern Woods",
+  "Southern Woods",
+  "Red River Town",
+  "Southern Woods",
+  "Red River Town",
+  "Red River Town",
+  "Sugar Factory",
+  "Sugar Factory",
+  "Red River Town",
+  "Checker Board Farm",
+  "Checker Board Farm",
+  "Southern Woods",
+  "Checker Board Farm",
+  "Red River Town",
+  "ALIVE LAB",
 ];
+
+const points = journeyOrder.map((zone) => zoneCoords[zone]);
 
 const pathData =
   `M ${points[0].x},${points[0].y} ` +
@@ -62,12 +86,9 @@ const Journey = () => {
             animate={controls}
             initial={{ pathLength: 0 }}
           />
-          {points.map((point, idx) => (
+          {Object.values(zoneCoords).map((point, idx) => (
             <g key={idx}>
               <circle cx={point.x} cy={point.y} r="14" fill="#2563eb" />
-              <text x={point.x + 18} y={point.y - 18} fontSize="24" fill="#333">
-                {point.label}
-              </text>
             </g>
           ))}
         </svg>
