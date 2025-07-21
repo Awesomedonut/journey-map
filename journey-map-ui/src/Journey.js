@@ -2,9 +2,15 @@ import React from "react";
 import { motion, useAnimation } from "framer-motion";
 
 const points = [
-  { x: 100, y: 500, },
-  { x: 300, y: 100, label: "B" },
-  { x: 500, y: 400, label: "C" },
+  { x: 110, y: 400, }, //   Southern Woods
+  { x: 100, y: 200}, // ALIVE LAB
+
+
+
+//   Checker Board Farm
+  { x: 330, y: 240, label: "B" }, //   Sugar Factory
+  { x: 400, y: 300, }, //   Red River Town
+  { x: 460, y: 420, label: "C" },
 ];
 
 const pathData =
