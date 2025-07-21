@@ -49,24 +49,25 @@ function getPartialPathData(points, step) {
 const Journey = () => {
   const controls = useAnimation();
   const [replayKey, setReplayKey] = React.useState(0);
-  const [step, setStep] = React.useState(points.length);
+  const [step, setStep] = React.useState(0);
   const [mode, setMode] = React.useState('full');
 
   const handleReplay = () => {
     setReplayKey((k) => k + 1);
-    setStep(points.length);
     setMode('full');
   };
 
   const handleNext = () => {
     setMode('step');
-    setStep((s) => Math.min(s + 1, points.length));
-  };
-
-  const handleResetStep = () => {
-    setMode('step');
-    setStep(1);
-    setReplayKey((k) => k + 1);
+    setStep((s) => {
+      if (s >= points.length) {
+        return 1;
+      } else if (s === 0) {
+        return 1;
+      } else {
+        return s + 1;
+      }
+    });
   };
 
   React.useEffect(() => {
@@ -76,12 +77,14 @@ const Journey = () => {
         pathLength: 1,
         transition: { duration: 2, ease: "easeInOut" },
       });
+    } else if (mode === 'step') {
+      // no animation for step mode
     }
   }, [replayKey, controls, mode]);
 
-  const pathToDraw = mode === 'full' ?
-    `M ${points[0].x},${points[0].y} ` + points.slice(1).map((p) => `L ${p.x},${p.y}`).join(' ') :
-    getPartialPathData(points, step);
+  const pathToDraw = mode === 'full'
+    ? `M ${points[0].x},${points[0].y} ` + points.slice(1).map((p) => `L ${p.x},${p.y}`).join(' ')
+    : getPartialPathData(points, step);
 
   return (
     <div>
@@ -123,9 +126,8 @@ const Journey = () => {
             Replay Journey
           </button>
           <button
-            onClick={step === 1 ? handleResetStep : handleNext}
+            onClick={handleNext}
             style={{ padding: "10px 20px", fontSize: 16 }}
-            disabled={step >= points.length && mode === 'step'}
           >
             Next
           </button>
