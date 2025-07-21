@@ -37,28 +37,51 @@ const journeyOrder = [
 
 const points = journeyOrder.map((zone) => zoneCoords[zone]);
 
-const pathData =
-  `M ${points[0].x},${points[0].y} ` +
-  points
-    .slice(1)
-    .map((p) => `L ${p.x},${p.y}`)
-    .join(" ");
+function getPartialPathData(points, step) {
+  if (step === 0) return '';
+  let d = `M ${points[0].x},${points[0].y}`;
+  for (let i = 1; i < step && i < points.length; i++) {
+    d += ` L ${points[i].x},${points[i].y}`;
+  }
+  return d;
+}
 
 const Journey = () => {
   const controls = useAnimation();
   const [replayKey, setReplayKey] = React.useState(0);
+  const [step, setStep] = React.useState(points.length);
+  const [mode, setMode] = React.useState('full');
 
   const handleReplay = () => {
+    setReplayKey((k) => k + 1);
+    setStep(points.length);
+    setMode('full');
+  };
+
+  const handleNext = () => {
+    setMode('step');
+    setStep((s) => Math.min(s + 1, points.length));
+  };
+
+  const handleResetStep = () => {
+    setMode('step');
+    setStep(1);
     setReplayKey((k) => k + 1);
   };
 
   React.useEffect(() => {
-    controls.set({ pathLength: 0 });
-    controls.start({
-      pathLength: 1,
-      transition: { duration: 2, ease: "easeInOut" },
-    });
-  }, [replayKey, controls]);
+    if (mode === 'full') {
+      controls.set({ pathLength: 0 });
+      controls.start({
+        pathLength: 1,
+        transition: { duration: 2, ease: "easeInOut" },
+      });
+    }
+  }, [replayKey, controls, mode]);
+
+  const pathToDraw = mode === 'full' ?
+    `M ${points[0].x},${points[0].y} ` + points.slice(1).map((p) => `L ${p.x},${p.y}`).join(' ') :
+    getPartialPathData(points, step);
 
   return (
     <div>
@@ -78,13 +101,13 @@ const Journey = () => {
       }}>
         <svg width="600" height="600" style={{ position: 'absolute', top: 0, left: 0 }}>
           <motion.path
-            key={replayKey}
-            d={pathData}
+            key={mode === 'full' ? replayKey : `step-${step}`}
+            d={pathToDraw}
             stroke="#3b82f6"
             strokeWidth="5"
             fill="none"
-            animate={controls}
-            initial={{ pathLength: 0 }}
+            animate={mode === 'full' ? controls : undefined}
+            initial={mode === 'full' ? { pathLength: 0 } : false}
           />
           {Object.values(zoneCoords).map((point, idx) => (
             <g key={idx}>
@@ -92,12 +115,21 @@ const Journey = () => {
             </g>
           ))}
         </svg>
-        <button
-          onClick={handleReplay}
-          style={{ position: 'absolute', bottom: 20, left: 20, padding: "10px 20px", zIndex: 2, fontSize: 16 }}
-        >
-          Replay Journey
-        </button>
+        <div style={{ position: 'absolute', bottom: 20, left: 20, zIndex: 2, display: 'flex', gap: 12 }}>
+          <button
+            onClick={handleReplay}
+            style={{ padding: "10px 20px", fontSize: 16 }}
+          >
+            Replay Journey
+          </button>
+          <button
+            onClick={step === 1 ? handleResetStep : handleNext}
+            style={{ padding: "10px 20px", fontSize: 16 }}
+            disabled={step >= points.length && mode === 'step'}
+          >
+            Next
+          </button>
+        </div>
       </div>
     </div>
   );
