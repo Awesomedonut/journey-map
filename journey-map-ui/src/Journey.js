@@ -10,40 +10,75 @@ const zoneCoords = {
 };
 
 const journeyOrder = [
-  "ALIVE LAB",
-  "Checker Board Farm",
-  "Red River Town",
-  "Sugar Factory",
-  "Southern Woods",
-  "Southern Woods",
-  "ALIVE LAB",
-  "Southern Woods",
-  "Southern Woods",
-  "Southern Woods",
-  "Red River Town",
-  "Southern Woods",
-  "Red River Town",
-  "Red River Town",
-  "Sugar Factory",
-  "Sugar Factory",
-  "Red River Town",
-  "Checker Board Farm",
-  "Checker Board Farm",
-  "Southern Woods",
-  "Checker Board Farm",
-  "Red River Town",
-  "ALIVE LAB",
+"ALIVE LAB",
+"Red River Town",
+"Checker Board Farm",
+"Southern Woods",
+"Checker Board Farm",
+"Checker Board Farm",
+"Red River Town",
+"Sugar Factory",
+"Sugar Factory",
+"Red River Town",
+"Red River Town",
+"Southern Woods",
+"Red River Town",
+"Southern Woods",
+"Southern Woods",
+"Southern Woods",
+"ALIVE LAB",
+"Southern Woods",
+"Southern Woods",
+"Sugar Factory",
+"Red River Town",
+"Checker Board Farm",
+"ALIVE LAB"
 ];
 
 const points = journeyOrder.map((zone) => zoneCoords[zone]);
 
-function getPartialPathData(points, step) {
-  if (step === 0) return '';
-  let d = `M ${points[0].x},${points[0].y}`;
-  for (let i = 1; i < step && i < points.length; i++) {
-    d += ` L ${points[i].x},${points[i].y}`;
+const colorPalette = [
+  "#3b82f6", // blue
+  "#f59e42", // orange
+  "#10b981", // green
+  "#ef4444", // red
+  "#a855f7", // purple
+  "#eab308", // yellow
+  "#6366f1", // indigo
+  "#f43f5e", // pink
+];
+
+function getSegmentKey(a, b, directionSensitive = false) {
+  if (directionSensitive) {
+    return `${a.x},${a.y}-${b.x},${b.y}`;
   }
-  return d;
+  // direction-agnostic key
+  return a.x < b.x || (a.x === b.x && a.y <= b.y)
+    ? `${a.x},${a.y}-${b.x},${b.y}`
+    : `${b.x},${b.y}-${a.x},${a.y}`;
+}
+
+function getSegmentColors(points, step) {
+  const segmentCounts = {};
+  const segmentColors = [];
+  for (let i = 1; i < step && i < points.length; i++) {
+    const from = points[i - 1];
+    const to = points[i];
+    // Special case: Southern Woods -> ALIVE LAB (directional)
+    if (
+      from === zoneCoords["Southern Woods"] &&
+      to === zoneCoords["ALIVE LAB"]
+    ) {
+      segmentColors.push({ from, to, color: "#ef4444" });
+      continue;
+    }
+    const key = getSegmentKey(from, to, false);
+    if (!segmentCounts[key]) segmentCounts[key] = 0;
+    segmentCounts[key]++;
+    const color = colorPalette[(segmentCounts[key] - 1) % colorPalette.length];
+    segmentColors.push({ from, to, color });
+  }
+  return segmentColors;
 }
 
 const Journey = () => {
@@ -77,14 +112,12 @@ const Journey = () => {
         pathLength: 1,
         transition: { duration: 2, ease: "easeInOut" },
       });
-    } else if (mode === 'step') {
-      // no animation for step mode
     }
   }, [replayKey, controls, mode]);
 
-  const pathToDraw = mode === 'full'
-    ? `M ${points[0].x},${points[0].y} ` + points.slice(1).map((p) => `L ${p.x},${p.y}`).join(' ')
-    : getPartialPathData(points, step);
+  const segmentColors = mode === 'full'
+    ? getSegmentColors(points, points.length)
+    : getSegmentColors(points, step);
 
   return (
     <div>
@@ -103,15 +136,20 @@ const Journey = () => {
         justifyContent: 'center'
       }}>
         <svg width="600" height="600" style={{ position: 'absolute', top: 0, left: 0 }}>
-          <motion.path
-            key={mode === 'full' ? replayKey : `step-${step}`}
-            d={pathToDraw}
-            stroke="#3b82f6"
-            strokeWidth="5"
-            fill="none"
-            animate={mode === 'full' ? controls : undefined}
-            initial={mode === 'full' ? { pathLength: 0 } : false}
-          />
+          {segmentColors.map(({ from, to, color }, idx) => (
+            <motion.line
+              key={idx}
+              x1={from.x}
+              y1={from.y}
+              x2={to.x}
+              y2={to.y}
+              stroke={color}
+              strokeWidth="5"
+              initial={mode === 'full' ? { pathLength: 0 } : false}
+              animate={mode === 'full' ? controls : undefined}
+              style={{ pathLength: mode === 'full' ? undefined : 1 }}
+            />
+          ))}
           {Object.values(zoneCoords).map((point, idx) => (
             <g key={idx}>
               <circle cx={point.x} cy={point.y} r="14" fill="#2563eb" />
